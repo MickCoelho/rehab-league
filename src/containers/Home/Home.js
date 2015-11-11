@@ -1,7 +1,6 @@
 import React, { Component } from 'react';
 // import { Link } from 'react-router';
-const RaisedButton = require('material-ui/lib/raised-button');
-
+// const RaisedButton = require('material-ui/lib/raised-button');
 
 export default class Home extends Component {
     render() {
