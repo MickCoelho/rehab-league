@@ -25,8 +25,8 @@ const pretty = new PrettyError();
 const app = new Express();
 const server = new http.Server(app);
 const proxy = httpProxy.createProxyServer({
-  target: 'http://' + (process.env.HOST || 'localhost') + ':' + config.apiPort,
-  ws: true
+    target: 'http://' + (process.env.HOST || 'localhost') + ':' + config.apiPort,
+    ws: true
 });
 
 app.use(compression());
@@ -36,95 +36,95 @@ app.use(require('serve-static')(path.join(__dirname, '..', 'static')));
 
 // Proxy to API server
 app.use('/api', (req, res) => {
-  proxy.web(req, res);
+    proxy.web(req, res);
 });
 
 // added the error handling to avoid https://github.com/nodejitsu/node-http-proxy/issues/527
 proxy.on('error', (error, req, res) => {
-  let json;
-  if (error.code !== 'ECONNRESET') {
-    console.error('proxy error', error);
-  }
-  if (!res.headersSent) {
-    res.writeHead(500, {'content-type': 'application/json'});
-  }
+    let json;
+    if (error.code !== 'ECONNRESET') {
+        console.error('proxy error', error);
+    }
+    if (!res.headersSent) {
+        res.writeHead(500, {'content-type': 'application/json'});
+    }
 
-  json = {error: 'proxy_error', reason: error.message};
-  res.end(JSON.stringify(json));
+    json = {error: 'proxy_error', reason: error.message};
+    res.end(JSON.stringify(json));
 });
 
 app.use((req, res) => {
-  if (__DEVELOPMENT__) {
-    // Do not cache webpack stats: the script file would change since
-    // hot module replacement is enabled in the development env
-    webpackIsomorphicTools.refresh();
-  }
-  const client = new ApiClient(req);
-
-  const store = createStore(reduxReactRouter, getRoutes, createHistory, client);
-
-  function hydrateOnClient() {
-    res.send('<!doctype html>\n' +
-      ReactDOM.renderToString(<Html assets={webpackIsomorphicTools.assets()} store={store}/>));
-  }
-
-  if (__DISABLE_SSR__) {
-    hydrateOnClient();
-    return;
-  }
-
-  store.dispatch(match(req.originalUrl, (error, redirectLocation, routerState) => {
-    if (redirectLocation) {
-      res.redirect(redirectLocation.pathname + redirectLocation.search);
-    } else if (error) {
-      console.error('ROUTER ERROR:', pretty.render(error));
-      res.status(500);
-      hydrateOnClient();
-    } else if (!routerState) {
-      res.status(500);
-      hydrateOnClient();
-    } else {
-      // Workaround redux-router query string issue:
-      // https://github.com/rackt/redux-router/issues/106
-      if (routerState.location.search && !routerState.location.query) {
-        routerState.location.query = qs.parse(routerState.location.search);
-      }
-
-      store.getState().router.then(() => {
-        const component = (
-          <Provider store={store} key="provider">
-            <ReduxRouter/>
-          </Provider>
-        );
-
-        const status = getStatusFromRoutes(routerState.routes);
-        if (status) {
-          res.status(status);
-        }
-        res.send('<!doctype html>\n' +
-          ReactDOM.renderToString(<Html assets={webpackIsomorphicTools.assets()} component={component} store={store}/>));
-      }).catch((err) => {
-        console.error('DATA FETCHING ERROR:', pretty.render(err));
-        res.status(500);
-        hydrateOnClient();
-      });
+    if (__DEVELOPMENT__) {
+        // Do not cache webpack stats: the script file would change since
+        // hot module replacement is enabled in the development env
+        webpackIsomorphicTools.refresh();
     }
-  }));
+    const client = new ApiClient(req);
+
+    const store = createStore(reduxReactRouter, getRoutes, createHistory, client);
+
+    function hydrateOnClient() {
+        res.send('<!doctype html>\n' +
+        ReactDOM.renderToString(<Html assets={webpackIsomorphicTools.assets()} store={store}/>));
+    }
+
+    if (__DISABLE_SSR__) {
+        hydrateOnClient();
+        return;
+    }
+
+    store.dispatch(match(req.originalUrl, (error, redirectLocation, routerState) => {
+        if (redirectLocation) {
+            res.redirect(redirectLocation.pathname + redirectLocation.search);
+        } else if (error) {
+            console.error('ROUTER ERROR:', pretty.render(error));
+            res.status(500);
+            hydrateOnClient();
+        } else if (!routerState) {
+            res.status(500);
+            hydrateOnClient();
+        } else {
+            // Workaround redux-router query string issue:
+            // https://github.com/rackt/redux-router/issues/106
+            if (routerState.location.search && !routerState.location.query) {
+                routerState.location.query = qs.parse(routerState.location.search);
+            }
+
+            store.getState().router.then(() => {
+                const component = (
+                    <Provider store={store} key="provider">
+                        <ReduxRouter/>
+                    </Provider>
+                );
+
+                const status = getStatusFromRoutes(routerState.routes);
+                if (status) {
+                    res.status(status);
+                }
+                res.send('<!doctype html>\n' +
+                ReactDOM.renderToString(<Html assets={webpackIsomorphicTools.assets()} component={component} store={store}/>));
+            }).catch((err) => {
+                console.error('DATA FETCHING ERROR:', pretty.render(err));
+                res.status(500);
+                hydrateOnClient();
+            });
+        }
+    }));
 });
 
 if (config.port) {
-  if (config.isProduction) {
-    const io = new SocketIo(server);
-    io.path('/api/ws');
-  }
-
-  server.listen(config.port, (err) => {
-    if (err) {
-      console.error(err);
+    if (config.isProduction) {
+        const io = new SocketIo(server);
+        io.path('/api/ws');
     }
-    console.info('----\n==> ✅  %s is running, talking to API server on %s.', config.app.title, config.apiPort);
-    console.info('==> 💻  Open http://%s:%s in a browser to view the app.', (process.env.HOST || 'localhost'), config.port);
-  });
+
+    server.listen(config.port, (err) => {
+        if (err) {
+            console.error(err);
+        }
+        console.info('----\n==> ✅  %s is running, talking to API server on %s.', config.app.title, config.apiPort);
+        console.info('==> 💻  Open http://%s:%s in a browser to view the app.', (process.env.HOST || 'localhost'), config.port);
+    });
 } else {
-  console.error('==>     ERROR: No PORT environment variable has been specified');
+    console.error('==>     ERROR: No PORT environment variable has been specified');
 }
