@@ -21,12 +21,14 @@ export default class Main extends Component {
 	 * Runs on server and client.
 	 */
 	render () {
-			if (__CLIENT__) {
-    	const styles = require('./Home.scss');
-			}
+		const styles = {};
+		if (__CLIENT__) {
+			const styles = require('./Home.scss');
+			console.log(styles.home);
+		}
 
 		return (
-      		<div className={'sad'}>
+      		<div s={styles.home}>
 				<p>Main</p>
 			</div>
 		);
