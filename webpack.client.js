@@ -23,6 +23,7 @@ module.exports = {
 	module:  {
 		loaders: [
 			{test: /\.json$/, loaders: ["json"]},
+			{test: /\.scss$/, loaders: ["style", "css", "sass"]},
 			{test: /\.js$/, loaders: ["babel?cacheDirectory&presets[]=es2015&presets[]=react&presets[]=stage-0"], exclude: /node_modules/}
 		],
 		postLoaders: [],
